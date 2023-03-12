@@ -1,10 +1,11 @@
+import asyncio
 import logging
 from os import getenv
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiohttp.web import run_app
+from aiohttp.web import AppRunner, TCPSite
 from aiohttp.web_app import Application
 
 logger = logging.getLogger(__name__)
@@ -18,10 +19,10 @@ dp = Dispatcher(storage=storage)
 
 
 async def on_startup(bot: Bot, base_url: str):
-    await bot.set_webhook(f"{base_url}/webhook")
+    await bot.set_webhook(f"{base_url}/update")
 
 
-def main():
+async def main():
     dp["base_url"] = APP_BASE_URL
     dp.startup.register(on_startup)
 
@@ -30,12 +31,17 @@ def main():
     SimpleRequestHandler(
         dispatcher=dp,
         bot=bot,
-    ).register(app, path="/webhook")
+    ).register(app, path="/update")
     setup_application(app, dp, bot=bot)
 
     logger.info("Starting bot")
 
-    run_app(app, host="127.0.0.1", port=5000)
+    runner = AppRunner(app)
+
+    await runner.setup()
+    site = TCPSite(runner, host="127.0.0.1", port=5000)
+    await site.start()
+    await asyncio.Event().wait()
 
 
 if __name__ == "__main__":
@@ -43,4 +49,4 @@ if __name__ == "__main__":
         level=logging.INFO,
         format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s',
     )
-    main()
+    asyncio.run(main())
