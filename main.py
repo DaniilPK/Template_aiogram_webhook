@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 TELEGRAM_TOKEN = getenv("TELEGRAM_TOKEN")
 APP_BASE_URL = getenv("APP_BASE_URL")
+WEB_SERVER_HOST = "127.0.0.1"
+WEB_SERVER_PORT = 5000
 
 storage = MemoryStorage()
 bot = Bot(token=TELEGRAM_TOKEN, parse_mode="HTML")
@@ -39,7 +41,7 @@ async def main():
     runner = AppRunner(app)
 
     await runner.setup()
-    site = TCPSite(runner, host="127.0.0.1", port=5000)
+    site = TCPSite(runner, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT)
     await site.start()
     await asyncio.Event().wait()
 
